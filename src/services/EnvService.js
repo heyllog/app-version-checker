@@ -1,6 +1,10 @@
 import { normalizeUrl } from '../utils/index.js'
 
 class EnvService {
+  static get telegramBotToken() {
+    return process.env.TELEGRAM_BOT_TOKEN
+  }
+
   static get requestConfig() {
     return {
       timeout: Number(process.env.REQUEST_TIMEOUT),

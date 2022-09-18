@@ -11,7 +11,8 @@
   "dependencies": {
     "axios": "^0.27.2",
     "dotenv": "^16.0.2",
-    "lowdb": "^3.0.0"
+    "lowdb": "^3.0.0",
+    "node-telegram-bot-api": "^0.59.0"
   },
   "devDependencies": {
     "@eclab/eslint-config": "^1.0.1",
