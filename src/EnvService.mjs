@@ -4,7 +4,6 @@ class EnvService {
   static get requestConfig() {
     return {
       timeout: Number(process.env.REQUEST_TIMEOUT),
-      retryCount: Number(process.env.REQUEST_RETRY_COUNT),
       interval: Number(process.env.REQUESTS_INTERVAL),
     }
   }

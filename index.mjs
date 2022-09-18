@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
-import { getAppStoreVersion } from "./src/getVersion.mjs";
-import EnvService from "./src/EnvService.mjs";
+import { getAppStoreVersion } from './src/getVersion.mjs'
+import EnvService from './src/EnvService.mjs'
 
 dotenv.config()
 
