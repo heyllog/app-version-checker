@@ -1,4 +1,4 @@
-import { normalizeUrl } from './utils.mjs'
+import { normalizeUrl } from '../utils/index.js'
 
 class EnvService {
   static get requestConfig() {

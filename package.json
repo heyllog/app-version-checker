@@ -2,14 +2,16 @@
   "name": "app-version-checker",
   "version": "1.0.0",
   "description": "Checks version of app in App Store and Google Play",
-  "main": "index.mjs",
+  "exports": "./index.js",
+  "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "node scripts/check-env.js && node index.mjs"
+    "start": "node scripts/check-env.js && node index.js"
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "dotenv": "^16.0.2"
+    "dotenv": "^16.0.2",
+    "lowdb": "^3.0.0"
   },
   "devDependencies": {
     "@eclab/eslint-config": "^1.0.1",
