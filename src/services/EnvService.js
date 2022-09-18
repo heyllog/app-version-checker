@@ -5,6 +5,10 @@ class EnvService {
     return process.env.TELEGRAM_BOT_TOKEN
   }
 
+  static get maxSubscribersCount() {
+    return process.env.MAX_SUBSCRIBERS_COUNT
+  }
+
   static get requestConfig() {
     return {
       timeout: Number(process.env.REQUEST_TIMEOUT),

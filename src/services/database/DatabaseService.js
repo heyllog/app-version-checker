@@ -1,6 +1,8 @@
 import { JSONFile, Low } from 'lowdb'
 
 import DatabaseServiceError from './DatabaseServiceError.js'
+import { isValidVersion } from '../../utils/index.js'
+import EnvService from '../EnvService.js'
 
 class DatabaseService {
   constructor() {
@@ -23,13 +25,6 @@ class DatabaseService {
     this.isReady = true
   }
 
-  /* Version should be in x.x.x format */
-  isValidVersion(version) {
-    const versionRegex = /^\d+\.\d+\.\d+$/
-
-    return versionRegex.test(version)
-  }
-
   /* Get version from database by app id */
   async getVersion(appId) {
     if (!this.isReady) {
@@ -45,7 +40,7 @@ class DatabaseService {
       await this.init()
     }
 
-    if (this.isValidVersion(version)) {
+    if (isValidVersion(version)) {
       this.db.data = {
         ...this.db.data,
         appVersions: {
@@ -73,6 +68,12 @@ class DatabaseService {
   async addSubscriber(appId, subscriberId) {
     if (!this.isReady) {
       await this.init()
+    }
+
+    if (this.db.data.subscribers?.[appId]?.length >= EnvService.maxSubscribersCount) {
+      throw new DatabaseServiceError(
+        "Unfortunately, too many people have already subscribed, so we can't add a new subscription",
+      )
     }
 
     if (this.db.data.subscribers?.[appId]?.includes(subscriberId)) {
