@@ -1,0 +1,18 @@
+{
+  "name": "app-version-checker",
+  "version": "1.0.0",
+  "description": "Checks version of app in App Store and Google Play",
+  "main": "index.mjs",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/check-env.js && node index.mjs"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dotenv": "^16.0.2"
+  },
+  "devDependencies": {
+    "@eclab/eslint-config": "^1.0.1",
+    "prettier": "^2.7.1"
+  }
+}
