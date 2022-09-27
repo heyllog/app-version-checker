@@ -7,8 +7,7 @@
   "license": "MIT",
   "scripts": {
     "check-env": "node scripts/check-env.js",
-    "dev": "yarn check-env && nodemon",
-    "dev:server": "nodemon src/index.ts",
+    "dev": "yarn check-env && nodemon src/index.ts",
     "build": "rimraf ./build && tsc"
   },
   "dependencies": {

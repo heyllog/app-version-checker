@@ -1,7 +1,7 @@
-import AppStoreService from 'services/StoreServices/AppStoreService'
-import DatabaseService from 'services/database/DatabaseService'
-import EnvService from 'services/EnvService'
-import NotificationService from 'services/NotificationService'
+import AppStoreService from './services/StoreServices/AppStoreService'
+import DatabaseService from './services/database/DatabaseService'
+import EnvService from './services/EnvService'
+import NotificationService from './services/NotificationService'
 
 const getVersion = async (appStoreService: AppStoreService, database: DatabaseService, notificationService: NotificationService) => {
   const { appId } = EnvService.appStoreConfig
@@ -23,8 +23,9 @@ const bot = async () => {
 
   await getVersion(appStoreService, database, notificationService)
 
-  setInterval(async () => {
+  setTimeout(async () => {
     await getVersion(appStoreService, database, notificationService)
+    await bot()
   }, EnvService.requestConfig.interval)
 }
 

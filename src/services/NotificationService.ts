@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api'
 import EnvService from './EnvService'
-import { getMessageFromError } from 'utils/index'
-import DatabaseService from "services/database/DatabaseService";
+import { getMessageFromError } from '../utils/index'
+import DatabaseService from '../services/database/DatabaseService'
 
 interface AppInfo {
   name: string

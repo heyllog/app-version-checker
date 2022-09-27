@@ -1,4 +1,4 @@
-import { normalizeUrl } from 'utils/index'
+import { normalizeUrl } from '../utils/index'
 
 class EnvServiceError extends Error {
   constructor(message: string) {

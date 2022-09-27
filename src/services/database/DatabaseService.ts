@@ -1,9 +1,9 @@
 import { JSONFile, Low } from 'lowdb'
 
 import DatabaseServiceError from './DatabaseServiceError'
-import { isValidVersion } from 'utils/index'
+import { isValidVersion } from '../../utils/index'
 import EnvService from '../EnvService'
-import { Database } from 'types/database'
+import { Database } from '../../types/database'
 
 class DatabaseService {
   private db: Low<Database>
