@@ -1,10 +1,14 @@
 import { JSONFile, Low } from 'lowdb'
 
-import DatabaseServiceError from './DatabaseServiceError.js'
-import { isValidVersion } from '../../utils/index.js'
-import EnvService from '../EnvService.js'
+import DatabaseServiceError from './DatabaseServiceError'
+import { isValidVersion } from 'utils/index'
+import EnvService from '../EnvService'
+import { Database } from 'types/database'
 
 class DatabaseService {
+  private db: Low<Database>
+  private isReady = false
+
   constructor() {
     this.db = new Low(new JSONFile('db.json'))
   }
@@ -26,7 +30,7 @@ class DatabaseService {
   }
 
   /* Get version from database by app id */
-  async getVersion(appId) {
+  async getVersion(appId: string): Promise<string | undefined> {
     if (!this.isReady) {
       await this.init()
     }
@@ -35,7 +39,7 @@ class DatabaseService {
   }
 
   /* Set version from database for app id */
-  async setVersion(appId, version) {
+  async setVersion(appId: string, version: string) {
     if (!this.isReady) {
       await this.init()
     }
@@ -56,44 +60,54 @@ class DatabaseService {
   }
 
   /* Add telegram id to database */
-  async getSubscribers(appId) {
+  async getSubscribers(appId: string): Promise<number[]> {
     if (!this.isReady) {
       await this.init()
     }
 
-    return this.db.data.subscribers[appId]
+    return this.db.data?.subscribers?.[appId] || []
   }
 
   /* Add telegram id to database */
-  async addSubscriber(appId, subscriberId) {
+  async addSubscriber(appId: string, subscriberId: number) {
     if (!this.isReady) {
       await this.init()
     }
 
-    if (this.db.data.subscribers?.[appId]?.length >= EnvService.maxSubscribersCount) {
+    const subscribers = this.db.data?.subscribers?.[appId] || []
+
+    if (subscribers.length >= EnvService.maxSubscribersCount) {
       throw new DatabaseServiceError(
         "Unfortunately, too many people have already subscribed, so we can't add a new subscription",
       )
     }
 
-    if (this.db.data.subscribers?.[appId]?.includes(subscriberId)) {
+    if (subscribers.includes(subscriberId)) {
       throw new DatabaseServiceError("You've already subscribed")
     }
 
-    this.db.data.subscribers[appId] = this.db.data.subscribers[appId]
-      ? Array.from(new Set(this.db.data.subscribers[appId].concat(subscriberId)))
-      : [subscriberId]
+    const updatedSubscribers = {
+      ...this.db.data?.subscribers,
+      [appId]: this.db.data?.subscribers?.[appId]
+        ? Array.from(new Set(this.db.data.subscribers[appId].concat(subscriberId)))
+        : [subscriberId],
+    }
+
+    this.db.data = {
+      ...this.db.data,
+      subscribers: updatedSubscribers,
+    }
 
     await this.db.write()
   }
 
   /* Remove telegram id to database */
-  async removeSubscriber(appId, subscriberId) {
+  async removeSubscriber(appId: string, subscriberId: number) {
     if (!this.isReady) {
       await this.init()
     }
 
-    if (!this.db.data.subscribers?.[appId]?.includes(subscriberId)) {
+    if (!this.db.data?.subscribers?.[appId]?.includes(subscriberId)) {
       throw new DatabaseServiceError("You haven't been subscribed")
     }
 

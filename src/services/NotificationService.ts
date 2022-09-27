@@ -1,9 +1,19 @@
 import TelegramBot from 'node-telegram-bot-api'
-import EnvService from './EnvService.js'
-import { getMessageFromError } from '../utils/index.js'
+import EnvService from './EnvService'
+import { getMessageFromError } from 'utils/index'
+import DatabaseService from "services/database/DatabaseService";
+
+interface AppInfo {
+  name: string
+  version: string
+  url: string
+}
 
 class NotificationService {
-  constructor(db, token) {
+  private bot: TelegramBot
+  private db: DatabaseService
+
+  constructor(db: DatabaseService, token: string) {
     this.bot = new TelegramBot(token, { polling: true })
     this.db = db
 
@@ -46,7 +56,7 @@ class NotificationService {
     })
   }
 
-  notifyAboutNewVersion(subscribers, appInfo) {
+  notifyAboutNewVersion(subscribers: number[], appInfo: AppInfo) {
     if (subscribers && subscribers.length) {
       subscribers.forEach((chatId) =>
         this.bot.sendMessage(

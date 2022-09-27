@@ -2,20 +2,32 @@
   "name": "app-version-checker",
   "version": "1.0.0",
   "description": "Checks version of app in App Store and Google Play",
-  "exports": "./index.js",
+  "exports": "./build/index.js",
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "node scripts/check-env.js && node index.js"
+    "check-env": "node scripts/check-env.js",
+    "dev": "yarn check-env && nodemon",
+    "dev:server": "nodemon src/index.ts",
+    "build": "rimraf ./build && tsc"
   },
   "dependencies": {
     "axios": "^0.27.2",
+    "chalk": "^5.0.1",
     "dotenv": "^16.0.2",
+    "lodash": "^4.17.21",
     "lowdb": "^3.0.0",
     "node-telegram-bot-api": "^0.59.0"
   },
   "devDependencies": {
     "@eclab/eslint-config": "^1.0.1",
-    "prettier": "^2.7.1"
+    "@types/lodash": "^4.14.185",
+    "@types/node": "^18.7.23",
+    "@types/node-telegram-bot-api": "^0.57.1",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.3"
   }
 }

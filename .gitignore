@@ -202,3 +202,4 @@ dist
 .pnp.*
 
 db.json
+build

@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import main from "./src/main.js";
+import bot from './bot'
 
 dotenv.config()
-main()
+bot()

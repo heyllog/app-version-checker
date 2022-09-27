@@ -1,9 +1,9 @@
-import AppStoreService from './services/AppStoreService.js'
-import DatabaseService from './services/database/DatabaseService.js'
-import EnvService from './services/EnvService.js'
-import NotificationService from './services/NotificationService.js'
+import AppStoreService from 'services/StoreServices/AppStoreService'
+import DatabaseService from 'services/database/DatabaseService'
+import EnvService from 'services/EnvService'
+import NotificationService from 'services/NotificationService'
 
-const getVersion = async (appStoreService, database, notificationService) => {
+const getVersion = async (appStoreService: AppStoreService, database: DatabaseService, notificationService: NotificationService) => {
   const { appId } = EnvService.appStoreConfig
   const appInfo = await appStoreService.getAppInfo({ appId })
   const lastWrittenVersion = await database.getVersion(appId)
@@ -16,7 +16,7 @@ const getVersion = async (appStoreService, database, notificationService) => {
   }
 }
 
-const main = async () => {
+const bot = async () => {
   const appStoreService = new AppStoreService()
   const database = new DatabaseService()
   const notificationService = new NotificationService(database, EnvService.telegramBotToken)
@@ -28,4 +28,4 @@ const main = async () => {
   }, EnvService.requestConfig.interval)
 }
 
-export default main
+export default bot

@@ -1,19 +1,19 @@
-const fs = require('fs')
-const { join } = require('path')
+import fs from 'fs'
+import { join } from 'path'
+import dotenv from 'dotenv'
+import chalk from 'chalk'
 
-const dotenv = require('dotenv')
-
-const envPath = join(__dirname, '../.env')
-const sampleEnvPath = join(__dirname, '../.env.sample')
+const envPath = join('.env')
+const sampleEnvPath = join('.env.sample')
 
 // Check that .env and .env.sample files exists
 if (!fs.existsSync(envPath)) {
-  console.log('\x1b[31m', `No .env file`)
+  console.log(chalk.red('No .env file'))
   process.exit(1)
 }
 
 if (!fs.existsSync(sampleEnvPath)) {
-  console.log('\x1b[31m', `No .env.sample file`)
+  console.log(chalk.red('No .env.sample file'))
   process.exit(1)
 }
 
@@ -29,6 +29,6 @@ const missingKeys = Object.keys(sampleEnvConfig).filter(value => !yourEnvConfig?
 
 // If any missing keys => exit with error
 if (missingKeys.length) {
-  console.log('\x1b[31m', `Missing keys in .env file: ${missingKeys.join(', ')}`)
+  console.log(chalk.red(`Missing keys in .env file: ${missingKeys.join(', ')}`))
   process.exit(1)
 }

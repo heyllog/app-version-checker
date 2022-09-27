@@ -1,20 +1,23 @@
-import createAxiosInstance from '../utils/createAxiosInstance.js'
-import { normalizeUrl } from '../utils/index.js'
-import EnvService from './EnvService.js'
+import createAxiosInstance from 'utils/createAxiosInstance'
+import { normalizeUrl } from 'utils/index'
+import EnvService from '../EnvService'
+import { AxiosInstance, AxiosRequestConfig } from 'axios'
+import AppStoreServiceError from 'services/StoreServices/AppStoreServiceError'
 
-class AppStoreServiceError extends Error {
-  constructor(message) {
-    super(message)
-    this.name = 'AppStoreServiceError'
-  }
+interface AppStoreOptions {
+  appId: string
+  countryCode?: string
+  date?: number
 }
 
 class AppStoreService {
-  constructor(config) {
+  private api: AxiosInstance
+
+  constructor(config?: AxiosRequestConfig) {
     this.api = createAxiosInstance(config)
   }
 
-  getAppStoreUrl(options) {
+  getAppStoreUrl(options: AppStoreOptions) {
     const { path } = EnvService.appStoreConfig
     const appStoreUrl = normalizeUrl(path)
 
@@ -24,7 +27,7 @@ class AppStoreService {
     return `${appStoreUrl}/${countryCode}lookup?bundleId=${options.appId}&date=${date}`
   }
 
-  async getAppInfo(options) {
+  async getAppInfo(options: AppStoreOptions) {
     if (!options?.appId) {
       throw new AppStoreServiceError('Provide appId')
     }
