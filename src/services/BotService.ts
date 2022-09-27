@@ -1,7 +1,9 @@
 import TelegramBot from 'node-telegram-bot-api'
-import EnvService from './EnvService'
+
 import { getMessageFromError } from '../utils/index'
 import DatabaseService from '../services/database/DatabaseService'
+
+import EnvService from './EnvService'
 
 interface AppInfo {
   name: string
@@ -9,7 +11,7 @@ interface AppInfo {
   url: string
 }
 
-class NotificationService {
+class BotService {
   private bot: TelegramBot
   private db: DatabaseService
 
@@ -68,4 +70,4 @@ class NotificationService {
   }
 }
 
-export default NotificationService
+export default BotService

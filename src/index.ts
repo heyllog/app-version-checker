@@ -1,5 +1,8 @@
 import * as dotenv from 'dotenv'
-import bot from './bot'
+
+import PollingService from './services/PollingService'
 
 dotenv.config()
-bot()
+
+const pollingService = new PollingService()
+pollingService.startPolling()
