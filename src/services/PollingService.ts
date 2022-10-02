@@ -8,12 +8,12 @@ import EnvService from './EnvService'
 class PollingService {
   private readonly appStoreService: AppStoreService
   private readonly database: DatabaseService
-  private readonly notificationService: BotService
+  private readonly botService: BotService
 
   constructor() {
     this.appStoreService = new AppStoreService()
     this.database = new DatabaseService()
-    this.notificationService = new BotService(this.database, EnvService.telegramBotToken)
+    this.botService = new BotService(this.database, EnvService.telegramBotToken)
   }
 
   private async getVersion() {
@@ -25,11 +25,11 @@ class PollingService {
       await this.database.setVersion(appId, appInfo.version)
       const subscribers = await this.database.getSubscribers(appId)
 
-      this.notificationService.notifyAboutNewVersion(subscribers, appInfo)
+      this.botService.notifyAboutNewVersion(subscribers, appInfo)
     }
   }
 
-  public async startPolling () {
+  public async startPolling() {
     try {
       await this.getVersion()
 
