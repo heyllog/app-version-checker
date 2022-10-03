@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv'
-
-import PollingService from './services/PollingService'
+import PollingService from './services/polling-services'
 
 dotenv.config()
 

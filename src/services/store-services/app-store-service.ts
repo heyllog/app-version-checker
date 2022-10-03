@@ -1,9 +1,9 @@
 import { AxiosInstance, AxiosRequestConfig } from 'axios'
 
-import createAxiosInstance from '../../utils/createAxiosInstance'
+import createAxiosInstance from '../../utils/create-axios-instance'
 import { normalizeUrl } from '../../utils/index'
-import EnvService from '../EnvService'
-import AppStoreServiceError from '../../services/StoreServices/AppStoreServiceError'
+import EnvService from '../env-service'
+import AppStoreServiceError from './app-store-service-error'
 
 interface AppStoreOptions {
   appId: string

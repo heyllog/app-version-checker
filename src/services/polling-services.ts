@@ -1,19 +1,18 @@
 import _ from 'lodash'
-
-import AppStoreService from './StoreServices/AppStoreService'
-import DatabaseService from './database/DatabaseService'
-import BotService from './BotService'
-import EnvService from './EnvService'
+import { AppStoreService } from './store-services'
+import { DatabaseService } from './database-service'
+import TelegramBotService from './telegram-bot-service'
+import EnvService from './env-service'
 
 class PollingService {
   private readonly appStoreService: AppStoreService
   private readonly database: DatabaseService
-  private readonly botService: BotService
+  private readonly botService: TelegramBotService
 
   constructor() {
     this.appStoreService = new AppStoreService()
     this.database = new DatabaseService()
-    this.botService = new BotService(this.database, EnvService.telegramBotToken)
+    this.botService = new TelegramBotService(this.database, EnvService.telegramBotToken)
   }
 
   private async getVersion() {

@@ -1,6 +1,6 @@
-import createAxiosInstance from './createAxiosInstance'
-import getMessageFromError from './getMessageFromError'
-import normalizeUrl from './normalizeUrl'
-import isValidVersion from './isValidVersion'
+import createAxiosInstance from './create-axios-instance'
+import getMessageFromError from './get-message-from-error'
+import normalizeUrl from './normalize-url'
+import isValidVersion from './is-valid-version'
 
 export { createAxiosInstance, getMessageFromError, normalizeUrl, isValidVersion }

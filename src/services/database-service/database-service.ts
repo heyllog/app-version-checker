@@ -1,8 +1,8 @@
 import { JSONFile, Low } from 'lowdb'
 
-import DatabaseServiceError from './DatabaseServiceError'
+import DatabaseServiceError from './database-service-error'
 import { isValidVersion } from '../../utils/index'
-import EnvService from '../EnvService'
+import EnvService from '../env-service'
 import { Database } from '../../types/database'
 
 class DatabaseService {
@@ -13,7 +13,7 @@ class DatabaseService {
     this.db = new Low(new JSONFile('db.json'))
   }
 
-  /* Read data from database */
+  /* Read data from database-service */
   async init() {
     await this.db.read()
 
@@ -29,7 +29,7 @@ class DatabaseService {
     this.isReady = true
   }
 
-  /* Get version from database by app id */
+  /* Get version from database-service by app id */
   async getVersion(appId: string): Promise<string | undefined> {
     if (!this.isReady) {
       await this.init()
@@ -38,7 +38,7 @@ class DatabaseService {
     return this.db.data?.appVersions?.[appId]
   }
 
-  /* Set version from database for app id */
+  /* Set version from database-service for app id */
   async setVersion(appId: string, version: string) {
     if (!this.isReady) {
       await this.init()
@@ -59,7 +59,7 @@ class DatabaseService {
     }
   }
 
-  /* Add telegram id to database */
+  /* Add telegram id to database-service */
   async getSubscribers(appId: string): Promise<number[]> {
     if (!this.isReady) {
       await this.init()
@@ -68,7 +68,7 @@ class DatabaseService {
     return this.db.data?.subscribers?.[appId] || []
   }
 
-  /* Add telegram id to database */
+  /* Add telegram id to database-service */
   async addSubscriber(appId: string, subscriberId: number) {
     if (!this.isReady) {
       await this.init()
@@ -101,7 +101,7 @@ class DatabaseService {
     await this.db.write()
   }
 
-  /* Remove telegram id to database */
+  /* Remove telegram id to database-service */
   async removeSubscriber(appId: string, subscriberId: number) {
     if (!this.isReady) {
       await this.init()
