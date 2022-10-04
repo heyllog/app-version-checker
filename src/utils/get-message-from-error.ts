@@ -13,7 +13,7 @@ const getMessageFromError = (error: unknown, defaultMessage = 'Something went wr
     return error.response.data.message
   }
 
-  if (_.isError(error) && error?.message) {
+  if (_.isError(error) && error.message) {
     return error.message
   }
 

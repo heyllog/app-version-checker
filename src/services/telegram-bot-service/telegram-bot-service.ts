@@ -1,14 +1,13 @@
 import TelegramBot from 'node-telegram-bot-api'
 
-import { getMessageFromError } from '../../utils'
 import { DatabaseService } from '../database-service'
-import EnvService from '../env-service'
-import {Commands} from "./options";
+import { AppBundleId, AppForSubscription, Command } from './options'
+import { getMessageFromError } from '../../utils'
 
 interface AppInfo {
   name: string
   version: string
-  url: string
+  storeUrl: string
 }
 
 class TelegramBotService {
@@ -27,21 +26,26 @@ class TelegramBotService {
       subscribers.forEach((chatId) =>
         this.bot.sendMessage(
           chatId,
-          `${appInfo.name} released version ${appInfo.version}!\n\nCheck it out: ${appInfo.url}`,
+          `${appInfo.name} released version ${appInfo.version}!\n\nCheck it out: ${appInfo.storeUrl}`,
         ),
       )
     }
   }
 
+  async sendMessage(chatId: number, message: string) {
+    await this.bot.sendMessage(chatId, message)
+  }
+
   private listenChatCommands() {
     this.bot.setMyCommands([
-      { command: Commands.subscribe, description: 'Subscribe' },
-      { command: Commands.unsubscribe, description: 'Unsubscribe' },
+      { command: Command.subscribe, description: 'Subscribe' },
+      { command: Command.unsubscribe, description: 'Unsubscribe' },
     ])
 
-    this.bot.onText(new RegExp(Commands.start), this.handleStart.bind(this))
-    this.bot.onText(new RegExp(Commands.subscribe), this.handleSubscribe.bind(this))
-    this.bot.onText(new RegExp(Commands.unsubscribe), this.handleUnsubscribe.bind(this))
+    this.bot.onText(new RegExp(Command.start), this.handleStart.bind(this))
+    this.bot.onText(new RegExp(Command.subscribe), this.handleSubscribe.bind(this))
+    this.bot.onText(new RegExp(Command.unsubscribe), this.handleUnsubscribe.bind(this))
+    this.bot.on('callback_query', this.handleCallbackQuery.bind(this))
   }
 
   private async handleStart(msg: TelegramBot.Message) {
@@ -56,32 +60,83 @@ class TelegramBotService {
   private async handleSubscribe(msg: TelegramBot.Message) {
     const chatId = msg.chat.id
 
-    try {
-      // TODO choose app in telegram menu
-      const appId = EnvService.appStoreConfig.appId
-
-      await this.db.addSubscriber(appId, chatId)
-      await this.bot.sendMessage(chatId, 'Successfully subscribed!')
-    } catch (e) {
-      await this.bot.sendMessage(chatId, getMessageFromError(e, 'Cannot add subscription right now. Try again later.'))
-    }
+    await this.bot.sendMessage(chatId, 'Choose app to subscribe', {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: AppForSubscription.ChangeNow,
+              callback_data: this.formatCallbackData({
+                command: Command.subscribe,
+                appId: AppBundleId[AppForSubscription.ChangeNow],
+              }),
+            },
+          ],
+          // [{ text: AppsForSubscription.Custom, callback_data: AppsForSubscription.Custom }],
+        ],
+      },
+    })
   }
 
   private async handleUnsubscribe(msg: TelegramBot.Message) {
     const chatId = msg.chat.id
+    const userSubscriptions = this.db.getUserSubscriptions(chatId)
+    const options = userSubscriptions.map((subscription) => [
+      {
+        text: subscription.name,
+        callback_data: this.formatCallbackData({
+          command: Command.unsubscribe,
+          appId: subscription.bundleId,
+        }),
+      },
+    ])
 
-    try {
-      // TODO choose app in telegram menu
-      const appId = EnvService.appStoreConfig.appId
+    await this.bot.sendMessage(chatId, 'Choose app to unsubscribe', {
+      reply_markup: {
+        inline_keyboard: options,
+      },
+    })
+  }
 
-      await this.db.removeSubscriber(appId, chatId)
-      await this.bot.sendMessage(chatId, 'Successfully unsubscribed!')
-    } catch (e) {
-      await this.bot.sendMessage(
-        chatId,
-        getMessageFromError(e, 'Cannot remove subscription right now. Try again later.'),
-      )
+  private async handleCallbackQuery(msg: TelegramBot.CallbackQuery) {
+    const data = msg.data
+    const chatId = msg.message?.chat.id
+
+    if (chatId && data) {
+      const { command, appId } = this.decodeCallbackData(data)
+
+      if (command === Command.subscribe) {
+        try {
+          await this.db.addSubscriber(appId, chatId)
+          await this.bot.sendMessage(chatId, 'Successfully subscribed!')
+        } catch (e) {
+          await this.bot.sendMessage(
+            chatId,
+            getMessageFromError(e, 'Cannot add subscription right now. Try again later.'),
+          )
+        }
+      }
+
+      if (command === Command.unsubscribe) {
+        try {
+          await this.db.removeSubscriber(appId, chatId)
+          await this.bot.sendMessage(chatId, 'Successfully unsubscribed!')
+        } catch (e) {
+          await this.bot.sendMessage(
+            chatId,
+            getMessageFromError(e, 'Cannot remove subscription right now. Try again later.'),
+          )
+        }
+      }
     }
+  }
+
+  private formatCallbackData(data: { command: Command; appId: string }): string {
+    return JSON.stringify(data)
+  }
+
+  private decodeCallbackData(data: string): { command: Command; appId: string } {
+    return JSON.parse(data)
   }
 }
 

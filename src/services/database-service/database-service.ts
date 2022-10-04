@@ -1,9 +1,8 @@
 import { JSONFile, Low } from 'lowdb'
 
 import DatabaseServiceError from './database-service-error'
-import { isValidVersion } from '../../utils/index'
-import EnvService from '../env-service'
-import { Database } from '../../types/database'
+import { AppInfo, Database } from './types'
+import _ from 'lodash'
 
 class DatabaseService {
   private db: Low<Database>
@@ -13,14 +12,14 @@ class DatabaseService {
     this.db = new Low(new JSONFile('db.json'))
   }
 
-  /* Read data from database-service */
+  /* Read data from database */
   async init() {
     await this.db.read()
 
     if (!this.db.data) {
       this.db.data = {
         subscribers: {},
-        appVersions: {},
+        appInfo: {},
       }
 
       await this.db.write()
@@ -29,100 +28,112 @@ class DatabaseService {
     this.isReady = true
   }
 
-  /* Get version from database-service by app id */
-  async getVersion(appId: string): Promise<string | undefined> {
-    if (!this.isReady) {
-      await this.init()
-    }
+  /* Get app info from database by app id */
+  getAppInfo(appId: string): AppInfo | undefined {
+    this.checkServiceReadyToUse(this.db.data)
 
-    return this.db.data?.appVersions?.[appId]
+    return this.db.data.appInfo[appId]
   }
 
-  /* Set version from database-service for app id */
-  async setVersion(appId: string, version: string) {
-    if (!this.isReady) {
-      await this.init()
+  /* Set app info to database by id */
+  async setAppInfo(appId: string, appInfo: AppInfo): Promise<void> {
+    this.checkServiceReadyToUse(this.db.data)
+
+    this.db.data = {
+      ...this.db.data,
+      appInfo: {
+        ...this.db.data.appInfo,
+        [appId]: appInfo,
+      },
     }
 
-    if (isValidVersion(version)) {
-      this.db.data = {
-        ...this.db.data,
-        appVersions: {
-          ...this.db.data?.appVersions,
-          [appId]: version,
-        },
-      }
-
-      await this.db.write()
-    } else {
-      throw new DatabaseServiceError('Invalid version')
-    }
+    await this.db.write()
   }
 
-  /* Add telegram id to database-service */
-  async getSubscribers(appId: string): Promise<number[]> {
-    if (!this.isReady) {
-      await this.init()
-    }
+  /* Get subscribers from database */
+  getSubscribers(appId: string): number[] {
+    this.checkServiceReadyToUse(this.db.data)
 
     return this.db.data?.subscribers?.[appId] || []
   }
 
-  /* Add telegram id to database-service */
-  async addSubscriber(appId: string, subscriberId: number) {
-    if (!this.isReady) {
-      await this.init()
-    }
+  /* Add telegram id to database */
+  async addSubscriber(appId: string, subscriberId: number): Promise<void> {
+    this.checkServiceReadyToUse(this.db.data)
 
     const subscribers = this.db.data?.subscribers?.[appId] || []
-
-    if (subscribers.length >= EnvService.maxSubscribersCount) {
-      throw new DatabaseServiceError(
-        "Unfortunately, too many people have already subscribed, so we can't add a new subscription",
-      )
-    }
 
     if (subscribers.includes(subscriberId)) {
       throw new DatabaseServiceError("You've already subscribed")
     }
 
-    const updatedSubscribers = {
+    this.db.data.subscribers = {
       ...this.db.data?.subscribers,
       [appId]: this.db.data?.subscribers?.[appId]
         ? Array.from(new Set(this.db.data.subscribers[appId].concat(subscriberId)))
         : [subscriberId],
     }
 
-    this.db.data = {
-      ...this.db.data,
-      subscribers: updatedSubscribers,
-    }
-
     await this.db.write()
   }
 
-  /* Remove telegram id to database-service */
+  /* Remove telegram id to database */
   async removeSubscriber(appId: string, subscriberId: number) {
-    if (!this.isReady) {
-      await this.init()
-    }
+    this.checkServiceReadyToUse(this.db.data)
 
     if (!this.db.data?.subscribers?.[appId]?.includes(subscriberId)) {
       throw new DatabaseServiceError("You haven't been subscribed")
     }
 
     if (this.db.data.subscribers?.[appId]?.includes(subscriberId)) {
-      const subscribers = this.db.data.subscribers?.[appId]?.filter((e) => e !== subscriberId) || []
+      const appSubscribers = this.db.data.subscribers?.[appId]?.filter((e) => e !== subscriberId)
+      const subscribers = {
+        ...this.db.data.subscribers,
+        [appId]: appSubscribers,
+      }
+
+      if (_.isEmpty(appSubscribers)) {
+        delete subscribers[appId]
+      }
 
       this.db.data = {
         ...this.db.data,
-        subscribers: {
-          ...this.db.data.subscribers,
-          [appId]: subscribers,
-        },
+        subscribers,
       }
 
       await this.db.write()
+    }
+  }
+
+  /* Get user's subscriptions by id */
+  getUserSubscriptions(subscriberId: number): { name: string; bundleId: string }[] {
+    this.checkServiceReadyToUse(this.db.data)
+
+    const bundleIds = Object.keys(this.db.data.subscribers).filter((bundleId) =>
+      this.db.data?.subscribers?.[bundleId].includes(subscriberId),
+    )
+
+    return bundleIds.map((id) => ({
+      name: this.db.data?.appInfo[id]?.name || id,
+      bundleId: id,
+    }))
+  }
+
+  /* Get applications that users are subscribed to */
+  async getSubscriptionApps(): Promise<string[]> {
+    this.checkServiceReadyToUse(this.db.data)
+
+    return Object.keys(this.db.data.subscribers)
+  }
+
+  /* Check that service is ready to use */
+  private checkServiceReadyToUse(input: Database | null): asserts input is Database {
+    if (!this.isReady) {
+      throw new DatabaseServiceError('Run init() before use DatabaseService')
+    }
+
+    if (!input || !input.appInfo || !input.subscribers) {
+      throw new DatabaseServiceError('Database is corrupted')
     }
   }
 }

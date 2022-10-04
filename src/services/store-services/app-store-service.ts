@@ -11,6 +11,15 @@ interface AppStoreOptions {
   date?: number
 }
 
+interface AppInfo {
+  name: string
+  version: string
+  company: string
+  storeUrl: string
+  releaseDate: string
+  currentVersionReleaseDate: string
+}
+
 class AppStoreService {
   private api: AxiosInstance
 
@@ -18,17 +27,7 @@ class AppStoreService {
     this.api = createAxiosInstance(config)
   }
 
-  getAppStoreUrl(options: AppStoreOptions) {
-    const { path } = EnvService.appStoreConfig
-    const appStoreUrl = normalizeUrl(path)
-
-    const countryCode = options?.countryCode || ''
-    const date = options?.date || new Date().getTime()
-
-    return `${appStoreUrl}/${countryCode}lookup?bundleId=${options.appId}&date=${date}`
-  }
-
-  async getAppInfo(options: AppStoreOptions) {
+  async getAppInfo(options: AppStoreOptions): Promise<AppInfo> {
     if (!options?.appId) {
       throw new AppStoreServiceError('Provide appId')
     }
@@ -40,13 +39,23 @@ class AppStoreService {
         name: data.results[0].trackName,
         version: data.results[0].version,
         company: data.results[0].sellerName,
-        url: data.results[0].trackViewUrl,
+        storeUrl: data.results[0].trackViewUrl,
         releaseDate: data.results[0].releaseDate,
         currentVersionReleaseDate: data.results[0].currentVersionReleaseDate,
       }
     }
 
     throw new AppStoreServiceError('No info about this app.')
+  }
+
+  private getAppStoreUrl(options: AppStoreOptions): string {
+    const { path } = EnvService.appStoreConfig
+    const appStoreUrl = normalizeUrl(path)
+
+    const countryCode = options?.countryCode || ''
+    const date = options?.date || new Date().getTime()
+
+    return `${appStoreUrl}/${countryCode}lookup?bundleId=${options.appId}&date=${date}`
   }
 }
 

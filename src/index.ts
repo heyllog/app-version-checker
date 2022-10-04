@@ -1,7 +1,6 @@
 import * as dotenv from 'dotenv'
-import PollingService from './services/polling-services'
+
+import main from './main'
 
 dotenv.config()
-
-const pollingService = new PollingService()
-pollingService.startPolling()
+main()

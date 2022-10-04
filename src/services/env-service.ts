@@ -8,22 +8,26 @@ class EnvServiceError extends Error {
 }
 
 class EnvService {
+  static get telegramAdmin(): number {
+    if (!process.env.TELEGRAM_ADMIN_ID) {
+      throw new EnvServiceError('Provide TELEGRAM_ADMIN_ID')
+    }
+
+    const id = Number(process.env.TELEGRAM_ADMIN_ID)
+
+    if (Number.isNaN(id)) {
+      throw new EnvServiceError('Incorrect TELEGRAM_ADMIN_ID')
+    }
+
+    return id
+  }
+
   static get telegramBotToken(): string {
     if (!process.env.TELEGRAM_BOT_TOKEN) {
       throw new EnvServiceError('Provide TELEGRAM_BOT_TOKEN')
     }
 
     return process.env.TELEGRAM_BOT_TOKEN
-  }
-
-  static get maxSubscribersCount(): number {
-    const maxSubscribersCount = Number(process.env.MAX_SUBSCRIBERS_COUNT)
-
-    if (!process.env.MAX_SUBSCRIBERS_COUNT || Number.isNaN(maxSubscribersCount)) {
-      throw new EnvServiceError('Provide correct MAX_SUBSCRIBERS_COUNT')
-    }
-
-    return maxSubscribersCount
   }
 
   static get requestConfig(): { timeout: number; interval: number } {
