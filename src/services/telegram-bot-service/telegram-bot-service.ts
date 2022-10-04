@@ -1,6 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api'
 
 import { DatabaseService } from '../database-service'
+import { AppInfo as DatabaseAppInfo } from '../database-service/types'
 import { AppBundleId, AppForSubscription, Command } from './options'
 import { getMessageFromError } from '../../utils'
 
@@ -38,13 +39,15 @@ class TelegramBotService {
 
   private listenChatCommands() {
     this.bot.setMyCommands([
-      { command: Command.subscribe, description: 'Subscribe' },
-      { command: Command.unsubscribe, description: 'Unsubscribe' },
+      { command: Command.Subscribe, description: 'Subscribe' },
+      { command: Command.Unsubscribe, description: 'Unsubscribe' },
+      { command: Command.Subscriptions, description: 'Show your subscriptions' },
     ])
 
-    this.bot.onText(new RegExp(Command.start), this.handleStart.bind(this))
-    this.bot.onText(new RegExp(Command.subscribe), this.handleSubscribe.bind(this))
-    this.bot.onText(new RegExp(Command.unsubscribe), this.handleUnsubscribe.bind(this))
+    this.bot.onText(new RegExp(Command.Start), this.handleStart.bind(this))
+    this.bot.onText(new RegExp(Command.Subscriptions), this.handleSubscriptions.bind(this))
+    this.bot.onText(new RegExp(Command.Subscribe), this.handleSubscribe.bind(this))
+    this.bot.onText(new RegExp(Command.Unsubscribe), this.handleUnsubscribe.bind(this))
     this.bot.on('callback_query', this.handleCallbackQuery.bind(this))
   }
 
@@ -57,6 +60,26 @@ class TelegramBotService {
     )
   }
 
+  private async handleSubscriptions(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id
+    const userSubscriptions = this.db.getUserSubscriptions(chatId)
+    const options = userSubscriptions.map((subscription) => [
+      {
+        text: subscription.name,
+        callback_data: this.formatCallbackData({
+          command: Command.Subscriptions,
+          appId: subscription.bundleId,
+        }),
+      },
+    ])
+
+    await this.bot.sendMessage(chatId, 'Click to see more info', {
+      reply_markup: {
+        inline_keyboard: options,
+      },
+    })
+  }
+
   private async handleSubscribe(msg: TelegramBot.Message) {
     const chatId = msg.chat.id
 
@@ -67,7 +90,7 @@ class TelegramBotService {
             {
               text: AppForSubscription.ChangeNow,
               callback_data: this.formatCallbackData({
-                command: Command.subscribe,
+                command: Command.Subscribe,
                 appId: AppBundleId[AppForSubscription.ChangeNow],
               }),
             },
@@ -85,7 +108,7 @@ class TelegramBotService {
       {
         text: subscription.name,
         callback_data: this.formatCallbackData({
-          command: Command.unsubscribe,
+          command: Command.Unsubscribe,
           appId: subscription.bundleId,
         }),
       },
@@ -105,7 +128,7 @@ class TelegramBotService {
     if (chatId && data) {
       const { command, appId } = this.decodeCallbackData(data)
 
-      if (command === Command.subscribe) {
+      if (command === Command.Subscribe) {
         try {
           await this.db.addSubscriber(appId, chatId)
           await this.bot.sendMessage(chatId, 'Successfully subscribed!')
@@ -117,7 +140,7 @@ class TelegramBotService {
         }
       }
 
-      if (command === Command.unsubscribe) {
+      if (command === Command.Unsubscribe) {
         try {
           await this.db.removeSubscriber(appId, chatId)
           await this.bot.sendMessage(chatId, 'Successfully unsubscribed!')
@@ -125,6 +148,23 @@ class TelegramBotService {
           await this.bot.sendMessage(
             chatId,
             getMessageFromError(e, 'Cannot remove subscription right now. Try again later.'),
+          )
+        }
+      }
+
+      if (command === Command.Subscriptions) {
+        try {
+          const appInfo = await this.db.getAppInfo(appId)
+
+          if (!appInfo) {
+            throw new Error('Cannot show info for this app right now. Try again later.')
+          }
+
+          await this.bot.sendMessage(chatId, this.formatAppInfo(appInfo))
+        } catch (e) {
+          await this.bot.sendMessage(
+            chatId,
+            getMessageFromError(e, 'Cannot show info for this app right now. Try again later.'),
           )
         }
       }
@@ -137,6 +177,17 @@ class TelegramBotService {
 
   private decodeCallbackData(data: string): { command: Command; appId: string } {
     return JSON.parse(data)
+  }
+
+  private formatAppInfo({
+    name,
+    version,
+    currentVersionReleaseDate,
+    releaseDate,
+    storeUrl,
+    company,
+  }: DatabaseAppInfo): string {
+    return `Name: ${name}\nCompany: ${company}\nVersion: ${version}\nRelease date: ${releaseDate}\nUpdated: ${currentVersionReleaseDate}\nLink to store: ${storeUrl}`
   }
 }
 

@@ -1,7 +1,8 @@
 export enum Command {
-  start = '/start',
-  subscribe = '/subscribe',
-  unsubscribe = '/unsubscribe',
+  Start = '/start',
+  Subscribe = '/subscribe',
+  Unsubscribe = '/unsubscribe',
+  Subscriptions = '/subscriptions',
 }
 
 export enum AppForSubscription {
