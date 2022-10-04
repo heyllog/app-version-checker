@@ -1,7 +1,10 @@
+import _ from 'lodash'
+
 import { AppStoreService } from './store-services'
 import { DatabaseService } from './database-service'
 import TelegramBotService from './telegram-bot-service'
 import EnvService from './env-service'
+import { getMessageFromError } from '../utils'
 
 class PollingService {
   private readonly appStoreService: AppStoreService
@@ -36,11 +39,20 @@ class PollingService {
   }
 
   public async startPolling() {
-    await this.getVersion()
+    try {
+      await this.getVersion()
 
-    setTimeout(async () => {
-      await this.startPolling()
-    }, EnvService.requestConfig.interval)
+      setTimeout(async () => {
+        await this.startPolling()
+      }, EnvService.requestConfig.interval)
+    } catch (e) {
+      const errorName = _.isError(e) ? `${e.name}: ` : ''
+      const errorMessage = getMessageFromError(e)
+      /* Notify admin that service is down */
+      await this.telegramBotService.sendMessage(EnvService.telegramAdmin, errorName.concat(errorMessage))
+
+      throw e
+    }
   }
 }
 
