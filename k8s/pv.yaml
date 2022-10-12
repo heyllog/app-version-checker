@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: app-version-checker-pv
+  labels:
+    app: app-version-checker
+  namespace: misc
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 128Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/app-version-checker/data"

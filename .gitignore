@@ -201,5 +201,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-db.json
+db/
 build
