@@ -6,10 +6,15 @@ import TelegramBotService from './telegram-bot-service'
 import EnvService from './env-service'
 import { getMessageFromError } from '../utils'
 
+const MAX_RETRIES_COUNT = 5
+
 class PollingService {
   private readonly appStoreService: AppStoreService
   private readonly databaseService: DatabaseService
   private readonly telegramBotService: TelegramBotService
+
+  /* polling retries count */
+  private retriesCount: number = 0
 
   constructor({
     appStoreService,
@@ -46,12 +51,22 @@ class PollingService {
         await this.startPolling()
       }, EnvService.requestConfig.interval)
     } catch (e) {
-      const errorName = _.isError(e) ? `${e.name}: ` : ''
+      this.retriesCount = this.retriesCount + 1
+      const errorName = _.isError(e) ? `Retry №${this.retriesCount} ${e.name}: ` : ''
       const errorMessage = getMessageFromError(e)
       /* Notify admin that service is down */
       await this.telegramBotService.sendMessage(EnvService.telegramAdmin, errorName.concat(errorMessage))
 
-      throw e
+      if (this.retriesCount > MAX_RETRIES_COUNT) {
+        await this.telegramBotService.sendMessage(
+          EnvService.telegramAdmin,
+          `Shutdown after ${this.retriesCount} retries`,
+        )
+
+        throw e
+      }
+
+      await this.startPolling()
     }
   }
 }
