@@ -36,14 +36,14 @@ spec:
           - mountPath: "/usr/app/db"
             name: app-version-checker-storage
         env:
-          - name: APP_STORE_PATH
-            value: https://itunes.apple.com
-          - name: APP_STORE_APP_ID
-            value: io.changenow.wallet-now
           - name: REQUEST_TIMEOUT
             value: "30000"
           - name: REQUESTS_INTERVAL
             value: "900000"
+          - name: APP_STORE_PATH
+            value: 
+          - name: APP_STORE_APP_ID
+            value: 
           - name: TELEGRAM_BOT_TOKEN
             value: 
           - name: TELEGRAM_ADMIN_ID
