@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app-version-checker
+  name: app-version-checker
+  namespace: misc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-version-checker
+  template:
+    metadata:
+      labels:
+        app: app-version-checker
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: app-version-checker-storage
+          persistentVolumeClaim:
+            claimName: app-version-checker-pvc
+      containers:
+      - image: docker-registry.evercodelab.com/misc/app-version-checker:v1.0.1
+        name: app-version-checker
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+          - mountPath: "/usr/app/db"
+            name: app-version-checker-storage
+        env:
+          - name: REQUEST_TIMEOUT
+            value: "30000"
+          - name: REQUESTS_INTERVAL
+            value: "900000"
+          - name: APP_STORE_PATH
+            value: 
+          - name: APP_STORE_APP_ID
+            value: 
+          - name: TELEGRAM_BOT_TOKEN
+            value: 
+          - name: TELEGRAM_ADMIN_ID
+            value: 

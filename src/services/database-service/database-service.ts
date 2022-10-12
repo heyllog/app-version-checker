@@ -9,7 +9,7 @@ class DatabaseService {
   private isReady = false
 
   constructor() {
-    this.db = new Low(new JSONFile('db.json'))
+    this.db = new Low(new JSONFile('./db/db.json'))
   }
 
   /* Read data from database */

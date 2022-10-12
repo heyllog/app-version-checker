@@ -1,6 +1,6 @@
 {
   "name": "app-version-checker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Checks version of app in App Store and Google Play",
   "exports": "./build/index.js",
   "type": "module",
