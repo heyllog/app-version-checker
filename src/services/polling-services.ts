@@ -31,6 +31,8 @@ class PollingService {
   }
 
   private async getVersion() {
+    console.log(`getVersion: ${new Date()}`)
+
     const { appId } = EnvService.appStoreConfig
     const appInfo = await this.appStoreService.getAppInfo({ appId })
     const appInfoFromDatabase = await this.databaseService.getAppInfo(appId)
@@ -56,6 +58,7 @@ class PollingService {
       const errorMessage = getMessageFromError(e)
       /* Notify admin that service is down */
       await this.telegramBotService.sendMessage(EnvService.telegramAdmin, errorName.concat(errorMessage))
+      console.log(errorName.concat(errorMessage))
 
       if (this.retriesCount > MAX_RETRIES_COUNT) {
         await this.telegramBotService.sendMessage(
