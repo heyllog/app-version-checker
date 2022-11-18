@@ -4,12 +4,11 @@ import _ from 'lodash'
 import winston from 'winston'
 import TelegramLogger from 'winston-telegram'
 import DailyRotateFile from 'winston-daily-rotate-file'
-import { TransformableInfo } from 'logform'
 
 import EnvService from '../../services/env-service'
-import { errorFilter, formatLog, infoFilter, TIMESTAMP_FORMAT } from './utils'
+import { errorFilter, infoFilter, TIMESTAMP_FORMAT, formatLog } from './utils'
 
-const { combine, printf, timestamp } = winston.format
+const { combine, timestamp, printf } = winston.format
 dotenv.config()
 
 const defaultTransportConfig = {
@@ -45,7 +44,7 @@ const logger = winston.createLogger({
       level: 'error',
       token: EnvService.telegramBotToken,
       chatId: EnvService.telegramAdmin,
-      formatMessage: (info: TransformableInfo) => `${_.capitalize(info.level)}: ${info.message}`,
+      formatMessage: ({ level, message }) => `${_.capitalize(level)}: ${message}`,
     }),
   ],
 })

@@ -4,6 +4,7 @@ import { DatabaseService } from '../database-service'
 import { AppInfo as DatabaseAppInfo } from '../database-service/types'
 import { AppBundleId, AppForSubscription, Command } from './options'
 import { getMessageFromError } from '../../utils'
+import logger from '../../lib/logger'
 
 interface AppInfo {
   name: string
@@ -15,6 +16,8 @@ class TelegramBotService {
   private bot: TelegramBot
   private db: DatabaseService
 
+  private readonly logger = logger.child({ service: 'telegram-bot-service' })
+
   constructor(db: DatabaseService, token: string) {
     this.bot = new TelegramBot(token, { polling: true })
     this.db = db
@@ -23,6 +26,8 @@ class TelegramBotService {
   }
 
   notifyAboutNewVersion(subscribers: number[], appInfo: AppInfo) {
+    this.logger.info(`New ${appInfo.name} version - ${appInfo.version}. Notify ${subscribers.length} users`)
+
     if (subscribers && subscribers.length) {
       subscribers.forEach((chatId) =>
         this.bot.sendMessage(
@@ -33,11 +38,9 @@ class TelegramBotService {
     }
   }
 
-  async sendMessage(chatId: number, message: string) {
-    await this.bot.sendMessage(chatId, message)
-  }
-
   private listenChatCommands() {
+    this.logger.info('Start listening commands')
+
     this.bot.setMyCommands([
       { command: Command.Subscribe, description: 'Subscribe' },
       { command: Command.Unsubscribe, description: 'Unsubscribe' },
@@ -52,6 +55,7 @@ class TelegramBotService {
   }
 
   private async handleStart(msg: TelegramBot.Message) {
+    this.logger.info(`New user: ${msg.chat.id}`)
     const chatId = msg.chat.id
 
     await this.bot.sendMessage(
@@ -61,6 +65,8 @@ class TelegramBotService {
   }
 
   private async handleSubscriptions(msg: TelegramBot.Message) {
+    this.logger.info(`User(${msg.chat.id}) requests ${Command.Subscriptions}`)
+
     const chatId = msg.chat.id
     const userSubscriptions = this.db.getUserSubscriptions(chatId)
     const options = userSubscriptions.map((subscription) => [
@@ -81,6 +87,7 @@ class TelegramBotService {
   }
 
   private async handleSubscribe(msg: TelegramBot.Message) {
+    this.logger.info(`User(${msg.chat.id}) requests ${Command.Subscribe}`)
     const chatId = msg.chat.id
 
     await this.bot.sendMessage(chatId, 'Choose app to subscribe', {
@@ -102,6 +109,8 @@ class TelegramBotService {
   }
 
   private async handleUnsubscribe(msg: TelegramBot.Message) {
+    this.logger.info(`User(${msg.chat.id}) requests ${Command.Unsubscribe}`)
+
     const chatId = msg.chat.id
     const userSubscriptions = this.db.getUserSubscriptions(chatId)
     const options = userSubscriptions.map((subscription) => [
@@ -132,7 +141,9 @@ class TelegramBotService {
         try {
           await this.db.addSubscriber(appId, chatId)
           await this.bot.sendMessage(chatId, 'Successfully subscribed!')
+          this.logger.info(`User(${chatId}) subscribes to ${appId}`)
         } catch (e) {
+          this.logger.warn(`User(${chatId}) can't subscribe to ${appId}. Error: ${getMessageFromError(e)}`)
           await this.bot.sendMessage(
             chatId,
             getMessageFromError(e, 'Cannot add subscription right now. Try again later.'),
@@ -144,7 +155,9 @@ class TelegramBotService {
         try {
           await this.db.removeSubscriber(appId, chatId)
           await this.bot.sendMessage(chatId, 'Successfully unsubscribed!')
+          this.logger.info(`User(${chatId}) unsubscribes to ${appId}`)
         } catch (e) {
+          this.logger.warn(`User(${chatId}) can't unsubscribe to ${appId}. Error: ${getMessageFromError(e)}`)
           await this.bot.sendMessage(
             chatId,
             getMessageFromError(e, 'Cannot remove subscription right now. Try again later.'),
@@ -161,7 +174,9 @@ class TelegramBotService {
           }
 
           await this.bot.sendMessage(chatId, this.formatAppInfo(appInfo))
+          this.logger.info(`User(${chatId}) watches list of subscriptions`)
         } catch (e) {
+          this.logger.warn(`User(${chatId}) can't request list of subscriptions. Error: ${getMessageFromError(e)}`)
           await this.bot.sendMessage(
             chatId,
             getMessageFromError(e, 'Cannot show info for this app right now. Try again later.'),
