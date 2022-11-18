@@ -17,7 +17,10 @@
     "dotenv": "^16.0.2",
     "lodash": "^4.17.21",
     "lowdb": "^3.0.0",
-    "node-telegram-bot-api": "^0.59.0"
+    "node-telegram-bot-api": "^0.59.0",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^4.7.1",
+    "winston-telegram": "^2.6.0"
   },
   "devDependencies": {
     "@eclab/eslint-config": "^1.0.1",

@@ -1,12 +1,15 @@
+import _ from 'lodash'
 import { JSONFile, Low } from 'lowdb'
 
 import DatabaseServiceError from './database-service-error'
 import { AppInfo, Database } from './types'
-import _ from 'lodash'
+import logger from '../../lib/logger'
 
 class DatabaseService {
   private db: Low<Database>
   private isReady = false
+
+  private readonly logger = logger.child({ service: 'database-service' })
 
   constructor() {
     this.db = new Low(new JSONFile('./db/db.json'))
@@ -14,9 +17,11 @@ class DatabaseService {
 
   /* Read data from database */
   async init() {
+    this.logger.info('Init database')
     await this.db.read()
 
     if (!this.db.data) {
+      this.logger.info('JSON file is empty, fill with empty fields')
       this.db.data = {
         subscribers: {},
         appInfo: {},
@@ -30,6 +35,7 @@ class DatabaseService {
 
   /* Get app info from database by app id */
   getAppInfo(appId: string): AppInfo | undefined {
+    this.logger.info(`Get app info for ${appId}`)
     this.checkServiceReadyToUse(this.db.data)
 
     return this.db.data.appInfo[appId]
@@ -37,6 +43,7 @@ class DatabaseService {
 
   /* Set app info to database by id */
   async setAppInfo(appId: string, appInfo: AppInfo): Promise<void> {
+    this.logger.info(`Set app info for ${appId}. New info: ${JSON.stringify(appInfo)}`)
     this.checkServiceReadyToUse(this.db.data)
 
     this.db.data = {
@@ -52,6 +59,7 @@ class DatabaseService {
 
   /* Get subscribers from database */
   getSubscribers(appId: string): number[] {
+    this.logger.info(`Get subscribers for ${appId}`)
     this.checkServiceReadyToUse(this.db.data)
 
     return this.db.data?.subscribers?.[appId] || []
@@ -59,6 +67,7 @@ class DatabaseService {
 
   /* Add telegram id to database */
   async addSubscriber(appId: string, subscriberId: number): Promise<void> {
+    this.logger.info(`Add subscriber(${subscriberId}) for ${appId}`)
     this.checkServiceReadyToUse(this.db.data)
 
     const subscribers = this.db.data?.subscribers?.[appId] || []
@@ -79,6 +88,7 @@ class DatabaseService {
 
   /* Remove telegram id to database */
   async removeSubscriber(appId: string, subscriberId: number) {
+    this.logger.info(`Remove subscriber(${subscriberId}) for ${appId}`)
     this.checkServiceReadyToUse(this.db.data)
 
     if (!this.db.data?.subscribers?.[appId]?.includes(subscriberId)) {
@@ -107,6 +117,7 @@ class DatabaseService {
 
   /* Get user's subscriptions by id */
   getUserSubscriptions(subscriberId: number): { name: string; bundleId: string }[] {
+    this.logger.info(`Get subscriptions for ${subscriberId}`)
     this.checkServiceReadyToUse(this.db.data)
 
     const bundleIds = Object.keys(this.db.data.subscribers).filter((bundleId) =>
@@ -119,21 +130,20 @@ class DatabaseService {
     }))
   }
 
-  /* Get applications that users are subscribed to */
-  async getSubscriptionApps(): Promise<string[]> {
-    this.checkServiceReadyToUse(this.db.data)
-
-    return Object.keys(this.db.data.subscribers)
-  }
-
   /* Check that service is ready to use */
   private checkServiceReadyToUse(input: Database | null): asserts input is Database {
     if (!this.isReady) {
-      throw new DatabaseServiceError('Run init() before use DatabaseService')
+      const errorMessage = 'Run init() before use DatabaseService'
+
+      this.logger.error(errorMessage)
+      throw new DatabaseServiceError(errorMessage)
     }
 
     if (!input || !input.appInfo || !input.subscribers) {
-      throw new DatabaseServiceError('Database is corrupted')
+      const errorMessage = 'Database is corrupted'
+
+      this.logger.error(errorMessage)
+      throw new DatabaseServiceError(errorMessage)
     }
   }
 }

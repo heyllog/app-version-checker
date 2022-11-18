@@ -5,6 +5,7 @@ import { DatabaseService } from './database-service'
 import TelegramBotService from './telegram-bot-service'
 import EnvService from './env-service'
 import { getMessageFromError } from '../utils'
+import logger from '../lib/logger'
 
 const MAX_RETRIES_COUNT = 5
 
@@ -12,6 +13,8 @@ class PollingService {
   private readonly appStoreService: AppStoreService
   private readonly databaseService: DatabaseService
   private readonly telegramBotService: TelegramBotService
+
+  private readonly logger = logger.child({ service: 'polling-service' })
 
   /* polling retries count */
   private retriesCount: number = 0
@@ -31,7 +34,7 @@ class PollingService {
   }
 
   private async getVersion() {
-    console.log(`getVersion: ${new Date()}`)
+    this.logger.info(`getVersion: ${new Date()}`)
 
     const { appId } = EnvService.appStoreConfig
     const appInfo = await this.appStoreService.getAppInfo({ appId })
@@ -53,22 +56,17 @@ class PollingService {
         await this.startPolling()
       }, EnvService.requestConfig.interval)
     } catch (e) {
-      this.retriesCount = this.retriesCount + 1
       const errorName = _.isError(e) ? `Retry №${this.retriesCount} ${e.name}: ` : ''
       const errorMessage = getMessageFromError(e)
-      /* Notify admin that service is down */
-      await this.telegramBotService.sendMessage(EnvService.telegramAdmin, errorName.concat(errorMessage))
-      console.log(errorName.concat(errorMessage))
+      this.logger.error(errorName.concat(errorMessage))
 
-      if (this.retriesCount > MAX_RETRIES_COUNT) {
-        await this.telegramBotService.sendMessage(
-          EnvService.telegramAdmin,
-          `Shutdown after ${this.retriesCount} retries`,
-        )
+      if (this.retriesCount >= MAX_RETRIES_COUNT) {
+        this.logger.error(`Shutdown after ${this.retriesCount} retries`)
 
         throw e
       }
 
+      this.retriesCount = this.retriesCount + 1
       await this.startPolling()
     }
   }
